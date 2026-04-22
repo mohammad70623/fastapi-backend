@@ -2,7 +2,7 @@ import ssl
 from sqlmodel import text, SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 from src.config import config
-
+ 
 ssl_context = ssl.create_default_context()
 
 engine = create_async_engine(
