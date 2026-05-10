@@ -31,6 +31,7 @@ class BookService:
         new_book.user_uid = user_uid
         session.add(new_book)
         await session.commit()
+        await session.refresh(new_book)
         return new_book  
 
     async def update_book(self, book_uid:str, update_data:BookUpdateModel, session:AsyncSession):
