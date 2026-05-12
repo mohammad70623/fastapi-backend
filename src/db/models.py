@@ -6,6 +6,16 @@ from pydantic import ConfigDict
 from typing import List, Optional
 
 
+
+class BookTag(SQLModel, table=True):
+    book_uid: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="books.uid", primary_key=True
+    )
+    tag_uid: Optional[uuid.UUID] = Field(
+        default=None, foreign_key="tags.uid", primary_key=True
+    )
+
+
 class User(SQLModel, table = True):
     __tablename__ = 'users'
     model_config = ConfigDict(extra='ignore')
@@ -63,6 +73,12 @@ class Book(SQLModel, table=True):
     reviews: List["Review"] = Relationship(back_populates = "book",
                                             sa_relationship_kwargs={"lazy": "selectin"}
                                               )
+    tags: List["Tag"] = Relationship(
+        back_populates="books",
+        link_model=BookTag,
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
+
 
 
 def __repr__(self):
@@ -89,8 +105,25 @@ class Review(SQLModel, table=True):
     book: Optional[Book] = Relationship(back_populates="reviews")
 
 
-def __repr__(self):
-    return f"<Review for book{self.book_uid} by user {self.user_uid}>"
+    def __repr__(self):
+        return f"<Review for book{self.book_uid} by user {self.user_uid}>"
+    
 
+class Tag(SQLModel, table=True):
+    __tablename__ = "tags"
+    uid: uuid.UUID = Field(
+        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
+    )
+    name: str = Field(sa_column=Column(pg.VARCHAR, nullable=False))
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    update_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    books: List[Book] = Relationship(
+        back_populates="tags",
+        link_model=BookTag,
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
+
+    def __repr__(self):
+        return f"<Tag {self.name}>"
 
   

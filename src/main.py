@@ -6,6 +6,10 @@ from src.db.database import init_db
 from src.auth.routes import auth_router
 from src.reviews.routes import review_router
 from src.tags.routes import tags_router
+from .middleware import register_middleware
+from .errors import register_all_errors
+
+
 from .errors import  (
     InvalidCredentials,
     TagAlreadyExists, 
@@ -20,7 +24,23 @@ from .errors import  (
     create_exception_handler
 )
 
+@asynccontextmanager
+async def life_span(app: FastAPI):
+    print("server is starting...")
+    await init_db()
+    yield
+    print("server has been stopped")
 
+version = "v1"
+
+app = FastAPI(
+    title = "Bookly",
+    description="A RestAPI for a book revierw web service",
+    version = version,
+    lifespan=life_span,
+)
+
+'''
 
 @asynccontextmanager
 async def life_span(app:FastAPI):
@@ -31,13 +51,6 @@ async def life_span(app:FastAPI):
 
     print(f"server has been stopped")
 
-version = "v1"
-
-app = FastAPI(
-    title = "Bookly",
-    description="A RestAPI for a book revierw web service",
-    version = version
-)
 
 app.add_exception_handler(
     UserAlreadyExists,
@@ -156,8 +169,10 @@ async def internal_server_error(request, exc):
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
+'''
 
-
+register_all_errors(app)
+register_middleware(app)
 
 app.include_router(book_router, prefix=f"/api/{version}/books", tags=['books'])
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=['auth'])

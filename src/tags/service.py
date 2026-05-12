@@ -9,7 +9,7 @@ from src.errors import BookNotFound, TagNotFound, TagAlreadyExists
 
 book_service = BookService()
 server_error = HTTPException(
-status_code=status.HTTP 500 INTERNAL SERVER ERROR, detail="Something went wrong"
+status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong"
 )
 
 class TagService:
