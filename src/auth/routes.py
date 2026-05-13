@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBooksModel, EmailModel,PasswordResetRequestModel,PasswordResetConfirmModel
 from .service import UserService
 from src.db.database import get_session
@@ -13,6 +13,7 @@ from src.errors import UserAlreadyExists, UserNotFound, InvalidCredentials, Inva
 from src.mail import mail, create_message
 from src.config import config
 from src.db.database import get_session
+from src.celery_tasks import send_email
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -25,14 +26,8 @@ async def send_mail(emails: EmailModel):
     emails = emails.addresses
     
     html = "<h1>Welcome to the app</h1>"
-    
-    message = create_message(
-        recipients=emails,
-        subject="Welcome",
-        body=html
-    )
-    
-    await mail.send_message(message)
+    subject = "Welcome to our app"
+    send_email.delay(emails, subject, html)
     
     return {"message": "Email sent successfully"}
 
@@ -41,6 +36,7 @@ async def send_mail(emails: EmailModel):
 @auth_router.post('/signup', status_code=status.HTTP_201_CREATED)
 async def create_user_Account(
     user_data: UserCreateModel, 
+    bg_task: BackgroundTasks,
     session:AsyncSession=Depends(get_session)
     
     ):
@@ -57,19 +53,15 @@ async def create_user_Account(
 
     link = f"http://{Config.DOMAIN}/api/v1/auth/verify/{token}"
 
-    html_message = f"""
+    html= f"""
     <h1>Verify your Email</h1>
     <p>Please click this <a href="{link}">link</a> to verify your email</p>
     """
-
-    message = create_message(
-        recipients=[email],
-        subject="Verify your email",
-        body=html_message
-    )
-
-    await mail.send_message(message)
-
+     
+    emails = [email]
+    subject = " Verify You Email"
+    
+    send_email.delay(emails, subject, html)
     return {
         "message": "Account Created! Check email to verify your account",
         "user": new_user
