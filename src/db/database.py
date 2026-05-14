@@ -25,7 +25,7 @@ Session = async_sessionmaker(
 
 async def init_db() ->None:
     async with engine.begin() as conn:
-        from src.books.models import Book
+        from src.db.models import Book
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_session() -> AsyncSession:
